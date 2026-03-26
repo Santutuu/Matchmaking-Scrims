@@ -1,0 +1,25 @@
+[ {
+  "id" : 1,
+  "username" : "proplayer",
+  "email" : "pro@example.com",
+  "contraseña" : "123",
+  "esCreador" : true
+}, {
+  "id" : 46906,
+  "username" : "Santinoo",
+  "email" : "ds",
+  "contraseña" : "sdlkfa",
+  "esCreador" : false
+}, {
+  "id" : 73493,
+  "username" : "Santutuu",
+  "email" : "santinoradix@gmail.com",
+  "contraseña" : "aloha",
+  "esCreador" : false
+}, {
+  "id" : 60823,
+  "username" : "Admin",
+  "email" : "santino@uade",
+  "contraseña" : "aloha",
+  "esCreador" : true
+} ]

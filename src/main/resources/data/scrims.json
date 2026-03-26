@@ -1,0 +1,57 @@
+[ {
+  "idScrim" : 1,
+  "estadoNombre" : "BuscandoJugadores",
+  "config" : {
+    "region" : "NA",
+    "rangeMin" : "PLATA",
+    "rangeMax" : "ORO",
+    "latenciaMax" : 200,
+    "fechaHoraInicio" : "2025-11-18T16:46:04.336749100",
+    "duration" : 10,
+    "reglasRoles" : "5v5",
+    "maxJugadores" : 10,
+    "estrategia" : "EmparejamientoPorLatencia"
+  }
+}, {
+  "idScrim" : 2,
+  "estadoNombre" : "BuscandoJugadores",
+  "config" : {
+    "region" : "NA",
+    "rangeMin" : "ORO",
+    "rangeMax" : "GRANMAESTRO",
+    "latenciaMax" : 200,
+    "fechaHoraInicio" : "2025-11-18T17:02:23.714332700",
+    "duration" : 10,
+    "maxJugadores" : 10,
+    "estrategia" : null
+  },
+  "postulaciones" : [ ]
+}, {
+  "idScrim" : 3,
+  "estadoNombre" : "BuscandoJugadores",
+  "config" : {
+    "region" : "4",
+    "rangeMin" : "ORO",
+    "rangeMax" : "GRANMAESTRO",
+    "latenciaMax" : 200,
+    "fechaHoraInicio" : "2025-11-18T17:03:48.368207800",
+    "duration" : 10,
+    "maxJugadores" : 5,
+    "estrategia" : null
+  },
+  "postulaciones" : [ ]
+}, {
+  "idScrim" : 4,
+  "estadoNombre" : "BuscandoJugadores",
+  "config" : {
+    "region" : "LATAM",
+    "rangeMin" : "HIERRO",
+    "rangeMax" : "ORO",
+    "latenciaMax" : 200,
+    "fechaHoraInicio" : "2025-11-18T17:40:11.796160400",
+    "duration" : 10,
+    "maxJugadores" : 10,
+    "estrategia" : null
+  },
+  "postulaciones" : [ ]
+} ]
