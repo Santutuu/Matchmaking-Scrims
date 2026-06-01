@@ -20,8 +20,7 @@ The application was designed following object-oriented principles, emphasizing c
 
 ## UML Digaram
 
-- [Class Diagram SVG] (./docs/uml/Imagen_Diagrama.png)
-
+- [Class Diagram PNG](./Diagrama%20UML/Imagen_Diagrama.png)
 - [StarUML Source File](./Diagrama%20UML/Scrims_UML_Class.mdj)
 
 
@@ -32,3 +31,21 @@ The application was designed following object-oriented principles, emphasizing c
 * Spring Data JPA
 * Maven
 * H2 / PostgreSQL
+
+
+## Run Locally
+
+### Install Dependencies
+
+```bash
+mvn clean install
+```
+
+### Run the Application
+
+```bash
+mvn spring-boot:run
+```
+
+
+
