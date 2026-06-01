@@ -51,7 +51,6 @@ public class Scrim {
         this.estadoActual = EstadoScrimTipo.BUSCANDO;
     }
 
-    // Compatibilidad con constructor del flujo legado
     public Scrim(int idScrim, String estadoNombre, ConfiguracionScrim config) {
         this.idScrim = (long) idScrim;
         this.estadoActual = mapEstado(estadoNombre);
@@ -65,11 +64,29 @@ public class Scrim {
         return postulaciones.size() >= config.getMaxJugadores();
     }
 
-    public int faltantes() {
-        if (postulaciones == null || config == null) {
+    public long cantidadPostulacionesAceptadas() {
+        if (postulaciones == null) {
             return 0;
         }
-        return Math.max(0, config.getMaxJugadores() - postulaciones.size());
+
+        return postulaciones.stream()
+                .filter(Postulacion::isAceptada)
+                .count();
+    }
+
+    public boolean cuposCompletosConAceptadas() {
+        if (config == null) {
+            return false;
+        }
+
+        return cantidadPostulacionesAceptadas() >= config.getMaxJugadores();
+    }
+
+    public int faltantes() {
+        if (config == null) {
+            return 0;
+        }
+        return Math.max(0, config.getMaxJugadores() - (int) cantidadPostulacionesAceptadas());
     }
 
     public boolean todasConfirmaciones() {
@@ -80,7 +97,7 @@ public class Scrim {
     }
 
     public boolean tieneCupoPara(String rol) {
-        return !cuposLlenos();
+        return !cuposCompletosConAceptadas();
     }
 
     public void agregarPostulacion(Postulacion postulacion) {
@@ -114,7 +131,6 @@ public class Scrim {
         this.idScrim = idScrim;
     }
 
-    // Compatibilidad con código previo
     public void setIdScrim(int idScrim) {
         this.idScrim = (long) idScrim;
     }
@@ -127,7 +143,6 @@ public class Scrim {
         this.estadoActual = estadoActual;
     }
 
-    // Compatibilidad con capa previa de String
     public String getEstadoNombre() {
         return estadoActual != null ? estadoActual.name() : null;
     }

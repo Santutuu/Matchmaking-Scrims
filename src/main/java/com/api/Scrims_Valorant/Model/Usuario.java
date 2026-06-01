@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.DiscriminatorColumn;
+import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -33,21 +34,25 @@ public abstract class Usuario {
     @Column(nullable = false)
     protected String passwordHash;
 
+    @Embedded
+    protected Rango rango;
+
     @Column(nullable = false)
     protected LocalDateTime fechaCreacion;
 
     @Column(nullable = false)
     protected LocalDateTime fechaActualizacion;
 
-    public Usuario(Long idUsuario, String username, String email, String passwordHash) {
+    public Usuario(Long idUsuario, String username, String email, String passwordHash, Rango rango) {
         this.idUsuario = idUsuario;
         this.username = username;
         this.email = email;
         this.passwordHash = passwordHash;
+        this.rango = rango;
     }
 
-    public Usuario(int idUsuario, String username, String email, String passwordHash) {
-        this((long) idUsuario, username, email, passwordHash);
+    public Usuario(int idUsuario, String username, String email, String passwordHash, Rango rango) {
+        this((long) idUsuario, username, email, passwordHash, rango);
     }
 
     public Usuario() {}
@@ -63,13 +68,37 @@ public abstract class Usuario {
         this.fechaActualizacion = LocalDateTime.now();
     }
 
-    public int getIdUsuario() { return idUsuario != null ? idUsuario.intValue() : 0; }
-    public Long getIdUsuarioLong() { return idUsuario; }
-    public String getUsername() { return username; }
-    public String getEmail() { return email; }
-    public String getPasswordHash() { return passwordHash; }
-    public LocalDateTime getFechaCreacion() { return fechaCreacion; }
-    public LocalDateTime getFechaActualizacion() { return fechaActualizacion; }
+    public int getIdUsuario() { 
+        return idUsuario != null ? idUsuario.intValue() : 0; 
+    }
+
+    public Long getIdUsuarioLong() { 
+        return idUsuario; 
+    }
+
+    public String getUsername() { 
+        return username; 
+    }
+
+    public String getEmail() { 
+        return email; 
+    }
+
+    public String getPasswordHash() { 
+        return passwordHash; 
+    }
+
+    public Rango getRango() {
+        return rango;
+    }
+
+    public LocalDateTime getFechaCreacion() { 
+        return fechaCreacion; 
+    }
+
+    public LocalDateTime getFechaActualizacion() { 
+        return fechaActualizacion; 
+    }
 
     public void setUsername(String username) {
         this.username = username;
@@ -81,6 +110,10 @@ public abstract class Usuario {
 
     public void setPasswordHash(String passwordHash) {
         this.passwordHash = passwordHash;
+    }
+
+    public void setRango(Rango rango) {
+        this.rango = rango;
     }
 
     public abstract boolean puedeCrearScrim();

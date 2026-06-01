@@ -5,6 +5,7 @@ import java.util.Scanner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.context.ConfigurableApplicationContext;
 
+
 import com.api.Scrims_Valorant.Facade.ScrimFacade;
 import com.api.Scrims_Valorant.Facade.UserFacade;
 import com.api.Scrims_Valorant.Model.ConfiguracionScrim;
@@ -14,10 +15,7 @@ import com.api.Scrims_Valorant.Model.Usuario;
 import com.api.Scrims_Valorant.Repository.ScrimRepository;
 import com.api.Scrims_Valorant.Repository.UsuarioRepository;
 import com.api.Scrims_Valorant.ScrimsValorantApplication;
-import com.api.Scrims_Valorant.Strategy.EmparejamientoPorHistorial;
-import com.api.Scrims_Valorant.Strategy.EmparejamientoPorLatencia;
-import com.api.Scrims_Valorant.Strategy.EmparejamientoPorRango;
-import com.api.Scrims_Valorant.Strategy.EstrategiaEmparejamiento;
+import com.api.Scrims_Valorant.Model.TipoEstrategiaEmparejamiento;
 
 public class ScrimApp {
     private static ScrimFacade scrimFacade;
@@ -210,87 +208,89 @@ public class ScrimApp {
     }
 
     private static void crearScrim() {
-        System.out.println("\nCREAR NUEVA SCRIM");
+    System.out.println("\nCREAR NUEVA SCRIM");
 
-        try {
-            System.out.print("Region (ej: LATAM, NA, EU): ");
-            String region = scanner.nextLine();
+    try {
+        System.out.print("Region (ej: LATAM, NA, EU): ");
+        String region = scanner.nextLine();
 
-            System.out.print("Rango Minimo (HIERRO, PLATA, ORO, PLATINO, MAESTRO, GRANMAESTRO): ");
-            String rangeMin = scanner.nextLine().toUpperCase();
+        System.out.print("Rango Minimo (HIERRO, PLATA, ORO, PLATINO, MAESTRO, GRANMAESTRO): ");
+        String rangeMin = scanner.nextLine().toUpperCase();
 
-            System.out.print("Rango Maximo (HIERRO, PLATA, ORO, PLATINO, MAESTRO, GRANMAESTRO): ");
-            String rangeMax = scanner.nextLine().toUpperCase();
+        System.out.print("Rango Maximo (HIERRO, PLATA, ORO, PLATINO, MAESTRO, GRANMAESTRO): ");
+        String rangeMax = scanner.nextLine().toUpperCase();
 
-            System.out.print("Latencia maxima (ms): ");
-            int latenciaMax = leerEntero("", 100);
+        System.out.print("Latencia maxima (ms): ");
+        int latenciaMax = leerEntero("", 100);
 
-            System.out.print("Duracion (minutos): ");
-            int duration = leerEntero("", 60);
+        System.out.print("Duracion (minutos): ");
+        int duration = leerEntero("", 60);
 
-            System.out.print("Maximo de jugadores: ");
-            int maxJugadores = leerEntero("", 10);
+        System.out.print("Maximo de jugadores: ");
+        int maxJugadores = leerEntero("", 10);
 
-            LocalDateTime fechaHoraInicio = LocalDateTime.now().plusHours(1);
-            System.out.println("Fecha/hora de inicio (por defecto: " + fechaHoraInicio + ")");
-            System.out.print("Cambiar? (s/n): ");
-            if (scanner.nextLine().equalsIgnoreCase("s")) {
-                System.out.print("Ingrese fecha/hora (YYYY-MM-DDTHH:MM ej: 2024-01-15T20:30): ");
-                String fechaInput = scanner.nextLine();
-                try {
-                    fechaHoraInicio = LocalDateTime.parse(fechaInput);
-                } catch (Exception e) {
-                    System.out.println("Formato invalido. Usando fecha por defecto.");
-                }
+        LocalDateTime fechaHoraInicio = LocalDateTime.now().plusHours(1);
+        System.out.println("Fecha/hora de inicio (por defecto: " + fechaHoraInicio + ")");
+        System.out.print("Cambiar? (s/n): ");
+        if (scanner.nextLine().equalsIgnoreCase("s")) {
+            System.out.print("Ingrese fecha/hora (YYYY-MM-DDTHH:MM ej: 2024-01-15T20:30): ");
+            String fechaInput = scanner.nextLine();
+            try {
+                fechaHoraInicio = LocalDateTime.parse(fechaInput);
+            } catch (Exception e) {
+                System.out.println("Formato invalido. Usando fecha por defecto.");
             }
-
-            System.out.println("\nEstrategia de emparejamiento:");
-            System.out.println("1. Por Rango");
-            System.out.println("2. Por Latencia");
-            System.out.println("3. Por Historial");
-            System.out.println("4. Sin estrategia");
-            int estrOpc = leerEntero("Opcion: ", 4);
-
-            EstrategiaEmparejamiento estrategia = null;
-            switch (estrOpc) {
-                case 1:
-                    estrategia = new EmparejamientoPorRango();
-                    break;
-                case 2:
-                    estrategia = new EmparejamientoPorLatencia();
-                    break;
-                case 3:
-                    estrategia = new EmparejamientoPorHistorial();
-                    break;
-                default:
-                    estrategia = null;
-            }
-
-            ConfiguracionScrim config = new ConfiguracionScrim(
-                    region, rangeMin, rangeMax, latenciaMax,
-                    fechaHoraInicio, duration, maxJugadores,
-                    estrategia
-            );
-
-            System.out.println("\nCreando scrim...");
-            Scrim scrimCreada = (Scrim) userFacade.crearScrim(usuarioLogueado.getIdUsuario(), config);
-
-            if (scrimCreada != null) {
-                System.out.println("Scrim creada exitosamente!");
-                System.out.println("ID: " + scrimCreada.getIdScrim());
-                System.out.println("Estado: " + scrimCreada.getEstadoNombre());
-                System.out.println("Region: " + scrimCreada.getConfig().getRegion());
-                System.out.println("Jugadores: " + scrimCreada.getConfig().getMaxJugadores());
-                System.out.println("Inicio: " + scrimCreada.getConfig().getFechaHoraInicio());
-                System.out.println("Rango: " + scrimCreada.getConfig().getRangeMin() + " - " + scrimCreada.getConfig().getRangeMax());
-            } else {
-                System.out.println("Error: No se pudo crear la scrim");
-            }
-
-        } catch (Exception e) {
-            System.out.println("Error al crear scrim: " + e.getMessage());
         }
+
+        System.out.println("\nEstrategia de emparejamiento:");
+        System.out.println("1. Por Rango");
+        System.out.println("2. Por Latencia");
+        System.out.println("3. Por Historial");
+        int estrOpc = leerEntero("Opcion: ");
+
+        TipoEstrategiaEmparejamiento tipoEstrategia = null;
+
+        switch (estrOpc) {
+            case 1:
+                tipoEstrategia = TipoEstrategiaEmparejamiento.RANGO;
+                break;
+            case 2:
+                tipoEstrategia = TipoEstrategiaEmparejamiento.LATENCIA;
+                break;
+            case 3:
+                tipoEstrategia = TipoEstrategiaEmparejamiento.HISTORIAL;
+                break;
+            default:
+                System.out.println("Opción inválida");
+                return;
+        }
+
+        ConfiguracionScrim config = new ConfiguracionScrim(
+                region, rangeMin, rangeMax, latenciaMax,
+                fechaHoraInicio, duration, maxJugadores,
+                tipoEstrategia
+        );
+
+        System.out.println("\nCreando scrim...");
+        Scrim scrimCreada = userFacade.crearScrim(usuarioLogueado.getIdUsuario(), config);
+
+        if (scrimCreada != null) {
+            System.out.println("Scrim creada exitosamente!");
+            System.out.println("ID: " + scrimCreada.getIdScrim());
+            System.out.println("Estado: " + scrimCreada.getEstadoNombre());
+            System.out.println("Region: " + scrimCreada.getConfig().getRegion());
+            System.out.println("Jugadores: " + scrimCreada.getConfig().getMaxJugadores());
+            System.out.println("Inicio: " + scrimCreada.getConfig().getFechaHoraInicio());
+            System.out.println("Rango: " + scrimCreada.getConfig().getRangeMin() + " - " + scrimCreada.getConfig().getRangeMax());
+            System.out.println("Tipo estrategia: " + scrimCreada.getConfig().getTipoEstrategia());
+        } else {
+            System.out.println("Error: No se pudo crear la scrim");
+        }
+
+    } catch (Exception e) {
+        System.out.println("Error al crear scrim: " + e.getMessage());
     }
+}
 
     private static void listarScrims() {
         System.out.println("\nLISTA DE SCRIMS");
@@ -375,6 +375,8 @@ public class ScrimApp {
         } else {
             System.out.println("Error en emparejamiento o scrim no encontrada");
         }
+
+        
     }
 
     private static void confirmarParticipacion() {

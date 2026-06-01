@@ -8,7 +8,7 @@ public class EmparejamientoPorLatencia implements EstrategiaEmparejamiento {
     public EmparejamientoPorLatencia() {}
 
     // Métodos de la interfaz
-    public boolean validarElegibilidad(Usuario usuario, Scrim scrim, String rolDeseado) { return false; }
+    public boolean validarElegibilidad(Usuario usuario, Scrim scrim) { return false; }
     public List<Usuario> emparejar(List<Usuario> candidatos, Scrim scrim) { return null; }
 
     // Métodos específicos

@@ -1,20 +1,22 @@
 package com.api.Scrims_Valorant.Facade;
 
-import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import org.springframework.stereotype.Component;
 
 import com.api.Scrims_Valorant.Model.ConfiguracionScrim;
-import com.api.Scrims_Valorant.Model.Confirmacion;
+import com.api.Scrims_Valorant.Model.Emparejador;
 import com.api.Scrims_Valorant.Model.Estadistica;
-import com.api.Scrims_Valorant.Model.Jugador;
+import com.api.Scrims_Valorant.Model.EstadoScrimTipo;
 import com.api.Scrims_Valorant.Model.Postulacion;
 import com.api.Scrims_Valorant.Model.Scrim;
 import com.api.Scrims_Valorant.Model.Usuario;
 import com.api.Scrims_Valorant.Repository.PostulacionRepository;
 import com.api.Scrims_Valorant.Repository.ScrimRepository;
 import com.api.Scrims_Valorant.Repository.UsuarioRepository;
+import com.api.Scrims_Valorant.State.ContextoScrim;
+import com.api.Scrims_Valorant.Strategy.EstrategiaEmparejamiento;
 
 @Component
 public class ScrimFacade {
@@ -23,20 +25,18 @@ public class ScrimFacade {
     private final PostulacionRepository postulacionRepository;
 
     public ScrimFacade(ScrimRepository scrimRepository,
-                      UsuarioRepository usuarioRepository,
-                      PostulacionRepository postulacionRepository) {
+                       UsuarioRepository usuarioRepository,
+                       PostulacionRepository postulacionRepository) {
         this.scrimRepository = scrimRepository;
         this.usuarioRepository = usuarioRepository;
         this.postulacionRepository = postulacionRepository;
     }
 
     public Scrim CrearScrim(int organizationId, ConfiguracionScrim configuration) {
-        // 1. Validar configuración
-        if (!configuration.esConfiguracionValida()) {
+        if (configuration == null || !configuration.esConfiguracionValida()) {
             throw new RuntimeException("Configuración de scrim inválida");
         }
 
-        // 2. Validar que el usuario es creador
         if (!usuarioRepository.esUsuarioCreador(organizationId)) {
             throw new RuntimeException("El usuario no tiene permisos para crear scrims");
         }
@@ -46,10 +46,7 @@ public class ScrimFacade {
             throw new RuntimeException("Usuario creador no encontrado");
         }
 
-        // 3. Crear scrim con estado inicial
         Scrim nuevaScrim = new Scrim(configuration, creador);
-
-        // 4. Guardar en repositorio
         scrimRepository.guardarScrim(nuevaScrim);
 
         System.out.println("✅ Scrim creada con ID: " + nuevaScrim.getIdScrim());
@@ -65,80 +62,62 @@ public class ScrimFacade {
             return false;
         }
 
-        if (scrim.cuposLlenos()) {
+        if (scrim.getEstadoActual() != EstadoScrimTipo.BUSCANDO) {
+            System.out.println("❌ La scrim no está aceptando postulaciones");
+            return false;
+        }
+
+        if (scrim.cuposCompletosConAceptadas()) {
             System.out.println("❌ Scrim llena - no hay cupos disponibles");
             return false;
         }
 
-        // Verificar si ya está postulado
         List<Postulacion> postulacionesExistentes = postulacionRepository.buscarPorScrim(scrimId);
         boolean yaPostulado = postulacionesExistentes.stream()
-                .anyMatch(p -> p.getUsuario().getIdUsuario() == usuarioId);
+                .anyMatch(p -> p.getUsuario() != null && p.getUsuario().getIdUsuario() == usuarioId);
 
         if (yaPostulado) {
             System.out.println("❌ Usuario ya está postulado a esta scrim");
             return false;
         }
 
-        // Crear postulación
+        boolean cumpleRequisitos = cumpleRequisitosScrim(scrim, usuario);
+        if (!cumpleRequisitos) {
+            System.out.println("❌ El usuario no cumple los requisitos de la scrim");
+            return false;
+        }
+
         Postulacion postulacion = new Postulacion();
         postulacion.setRolDeseado(rolDeseado);
-        postulacion.setFecha(java.time.LocalDateTime.now());
+        postulacion.setFecha(LocalDateTime.now());
         postulacion.setUsuario(usuario);
         postulacion.setScrim(scrim);
-        boolean cumpleRequisitos = cumpleRequisitosScrim(scrim, usuario);
-        if (cumpleRequisitos) {
-            postulacion.aceptada();
-        } else {
-            postulacion.rechazada();
-        }
+        postulacion.aceptada();
 
         scrim.agregarPostulacion(postulacion);
-
-        if (cumpleRequisitos) {
-            boolean yaConfirmado = scrim.getConfirmaciones().stream()
-                    .anyMatch(c -> c.getUsuario() != null && c.getUsuario().getIdUsuario() == usuarioId);
-
-            if (!yaConfirmado) {
-                Confirmacion confirmacion = new Confirmacion();
-                confirmacion.setConfirmado(true);
-                confirmacion.setFecha(LocalDate.now());
-                confirmacion.setUsuario(usuario);
-                confirmacion.setScrim(scrim);
-                scrim.getConfirmaciones().add(confirmacion);
-            }
-
-            if (scrim.todasConfirmaciones()) {
-                scrim.setEstadoNombre("CONFIRMADO");
-            }
-        }
-
         scrimRepository.guardarScrim(scrim);
 
-        if (cumpleRequisitos) {
-            System.out.println("✅ Postulación aceptada y confirmación creada para usuario: " + usuario.getUsername());
-            return true;
+        System.out.println("✅ Postulación aceptada para usuario: " + usuario.getUsername());
+
+        if (scrim.cuposCompletosConAceptadas()) {
+            System.out.println("🚀 Cupos completos con postulaciones aceptadas. Ejecutando emparejamiento...");
+            ejecutarEmparejamiento(scrimId);
         }
 
-        System.out.println("❌ Postulación rechazada: el usuario no cumple requisitos de la scrim");
-        return false;
+        return true;
     }
 
     private boolean cumpleRequisitosScrim(Scrim scrim, Usuario usuario) {
-        if (!(usuario instanceof Jugador jugador)) {
+        if (scrim == null || scrim.getConfig() == null) {
             return false;
         }
 
-        if (jugador.getRango() == null || jugador.getRango().getDivision() == null) {
+        EstrategiaEmparejamiento estrategia = scrim.getConfig().getEstrategiaEmparejamiento();
+        if (estrategia == null) {
             return false;
         }
 
-        ConfiguracionScrim config = scrim.getConfig();
-        if (config == null) {
-            return false;
-        }
-
-        return config.esRangoValido(jugador.getRango().getDivision().name());
+        return estrategia.validarElegibilidad(usuario, scrim);
     }
 
     public List<Postulacion> obtenerPostulacionesDeScrim(int scrimId) {
@@ -173,51 +152,50 @@ public class ScrimFacade {
 
     public Scrim ejecutarEmparejamiento(int scrimId) {
         Scrim scrim = scrimRepository.buscarPorId(scrimId);
-        if (scrim != null && scrim.getConfig().getEstrategiaEmparejamiento() != null) {
-            // Aquí iría la lógica de emparejamiento
-            scrim.setEstadoNombre("LobbyArmado");
-            scrimRepository.guardarScrim(scrim);
-            System.out.println("🎯 Emparejamiento ejecutado para scrim: " + scrimId);
+        if (scrim == null) {
+            System.out.println("❌ Scrim no encontrada: " + scrimId);
+            return null;
         }
+
+        if (scrim.getEstadoActual() != EstadoScrimTipo.BUSCANDO) {
+            System.out.println("⚠️ Emparejamiento omitido: la scrim no está en estado BUSCANDO");
+            return scrim;
+        }
+
+        if (!scrim.cuposCompletosConAceptadas()) {
+            System.out.println("⚠️ Emparejamiento omitido: no se completaron los cupos con aceptadas");
+            return scrim;
+        }
+
+        EstrategiaEmparejamiento estrategia = scrim.getConfig() != null
+                ? scrim.getConfig().getEstrategiaEmparejamiento()
+                : null;
+
+        if (estrategia == null) {
+            System.out.println("⚠️ Emparejamiento omitido: la scrim no tiene estrategia configurada");
+            return scrim;
+        }
+
+        Emparejador emparejador = new Emparejador(estrategia);
+        List<Postulacion> seleccionadas = emparejador.seleccionarPostulaciones(scrim);
+
+        if (seleccionadas.size() < scrim.getConfig().getMaxJugadores()) {
+            System.out.println("⚠️ Emparejamiento omitido: no hay suficientes postulaciones elegibles");
+            return scrim;
+        }
+
+        ContextoScrim contexto = new ContextoScrim(scrim);
+        contexto.armarLobby();
+
+        scrimRepository.guardarScrim(scrim);
+        System.out.println("✅ Emparejamiento ejecutado. Nuevo estado: " + scrim.getEstadoNombre());
+
         return scrim;
     }
 
     public boolean confirmarParticipacion(int scrimId, int usuarioId) {
-        try {
-            Scrim scrim = scrimRepository.buscarPorId(scrimId);
-            if (scrim != null) {
-                // Buscar postulación del usuario
-                List<Postulacion> postulaciones = postulacionRepository.buscarPorScrim(scrimId);
-                Postulacion postulacionUsuario = postulaciones.stream()
-                        .filter(p -> p.getUsuario().getIdUsuario() == usuarioId)
-                        .findFirst()
-                        .orElse(null);
-
-                if (postulacionUsuario != null && postulacionUsuario.isAceptada()) {
-                    // Lógica de confirmación
-                    // Aquí podrías crear una confirmación o marcar la postulación como confirmada
-
-                    // Verificar si todos han confirmado
-                    long confirmadosCount = postulaciones.stream()
-                            .filter(Postulacion::isAceptada)
-                            .count();
-
-                    if (confirmadosCount >= scrim.getConfig().getMaxJugadores()) {
-                        scrim.setEstadoNombre("Confirmado");
-                        scrimRepository.guardarScrim(scrim);
-                        System.out.println("✅ Todos confirmados - Scrim lista para iniciar");
-                    }
-                    return true;
-                } else {
-                    System.out.println("❌ Usuario no tiene postulación aceptada");
-                    return false;
-                }
-            }
-            return false;
-        } catch (Exception e) {
-            System.out.println("❌ Error confirmando participación: " + e.getMessage());
-            return false;
-        }
+        System.out.println("ℹ️ Confirmación no se usa en este flujo actual");
+        return false;
     }
 
     public void finalizarScrim(int scrimId, Estadistica estadisticas) {
@@ -237,7 +215,6 @@ public class ScrimFacade {
             scrim.setEstadoNombre("Cancelado");
             scrimRepository.guardarScrim(scrim);
 
-            // Opcional: también cancelar todas las postulaciones
             List<Postulacion> postulaciones = postulacionRepository.buscarPorScrim(scrimId);
             for (Postulacion postulacion : postulaciones) {
                 postulacion.rechazada();
@@ -251,16 +228,13 @@ public class ScrimFacade {
     }
 
     public void RegistrarEstadisticas(Object request) {
-        // Implementación pendiente
         System.out.println("📊 Registrando estadísticas...");
     }
 
     public void Reporte(Object request) {
-        // Implementación pendiente
         System.out.println("📋 Generando reporte...");
     }
 
-    // Método adicional para obtener información de una scrim con sus postulaciones
     public Scrim obtenerScrimConPostulaciones(int scrimId) {
         Scrim scrim = scrimRepository.buscarPorId(scrimId);
         if (scrim != null) {

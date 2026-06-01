@@ -1,7 +1,6 @@
 package com.api.Scrims_Valorant.Model;
 
 import jakarta.persistence.DiscriminatorValue;
-import jakarta.persistence.Embedded;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Transient;
 
@@ -9,33 +8,22 @@ import jakarta.persistence.Transient;
 @DiscriminatorValue("JUGADOR")
 public class Jugador extends Usuario {
 
-    @Embedded
-    private Rango rango;
-
     @Transient
     private RolUsuarioScrim rolUsuarioScrim;
 
     public Jugador() {
+        super();
     }
 
     public Jugador(String username, String email, String passHash, Rango rango) {
-        super(null, username, email, passHash);
-        this.rango = rango;
+        super((Long) null, username, email, passHash, rango);
     }
 
     public Jugador(int id, String username, String email, String passHash,
                    RolUsuarioScrim rolUsuarioScrim,
                    Rango rango) {
-
-        super(id, username, email, passHash);
+        super(id, username, email, passHash, rango);
         this.rolUsuarioScrim = rolUsuarioScrim;
-        this.rango = rango;
-    }
-
-    public Rango getRango() { return rango; }
-
-    public void setRango(Rango rango) {
-        this.rango = rango;
     }
 
     public RolUsuarioScrim getRolUsuarioScrim() {
@@ -46,7 +34,6 @@ public class Jugador extends Usuario {
         this.rolUsuarioScrim = rolUsuarioScrim;
     }
 
-    // Compatibilidad con código previo
     public RolUsuarioScrim getRolJugado() {
         return rolUsuarioScrim;
     }

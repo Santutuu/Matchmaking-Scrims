@@ -8,14 +8,15 @@ import jakarta.persistence.Entity;
 public class CreadorScrim extends Usuario {
 
     public CreadorScrim() {
-    }
-
-    public CreadorScrim(int id, String username, String email, String passHash) {
-        super(id, username, email, passHash);
+        super();
     }
 
     public CreadorScrim(String username, String email, String passHash) {
-        super(null, username, email, passHash);
+        super((Long) null, username, email, passHash, null);
+    }
+
+    public CreadorScrim(int id, String username, String email, String passHash) {
+        super(id, username, email, passHash, null);
     }
 
     @Override

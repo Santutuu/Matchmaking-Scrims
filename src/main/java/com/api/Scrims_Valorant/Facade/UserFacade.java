@@ -20,7 +20,6 @@ public class UserFacade {
         this.userUtils = userUtils;
     }
 
-    // Autenticación
     public Usuario autenticarUsuario(String username, String password) {
         return userUtils.validarCredenciales(username, password);
     }
@@ -33,7 +32,6 @@ public class UserFacade {
         return userUtils.registrarNuevoUsuario(username, email, password, esCreador, rango);
     }
 
-    // Operaciones de usuario
     public Usuario obtenerUsuarioPorId(int userId) {
         return usuarioRepository.buscarPorId(userId);
     }
@@ -42,7 +40,6 @@ public class UserFacade {
         return usuarioRepository.esUsuarioCreador(userId);
     }
 
-    // Operaciones de scrim para usuarios
     public boolean postularseAScrim(int scrimId, int usuarioId, String rolDeseado) {
         Usuario usuario = usuarioRepository.buscarPorId(usuarioId);
         if (usuario == null) {
@@ -68,7 +65,6 @@ public class UserFacade {
         return scrimFacade.confirmarParticipacion(scrimId, usuarioId);
     }
 
-    // Crear scrim (solo para creadores)
     public Scrim crearScrim(int usuarioCreadorId, ConfiguracionScrim configuracionScrim) {
         if (!puedeCrearScrim(usuarioCreadorId)) {
             System.out.println("El usuario no tiene permisos para crear scrims");
