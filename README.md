@@ -20,7 +20,7 @@ The application was designed following object-oriented principles, emphasizing c
 
 ## UML Digaram
 
-- [Class Diagram PNG](./Diagrama%20UML/Imagen_Diagrama.png)
+- [Class Diagram PNG](./Diagrama%20UML/Imagen_Diagrama.svg) 
 - [StarUML Source File](./Diagrama%20UML/Scrims_UML_Class.mdj)
 
 
